@@ -2,6 +2,7 @@
 #from features import bulk_extract_features
 import numpy as np
 import os
+import sgf_wrapper
 from sgf_wrapper import replay_sgf   #wrapper 封装
 import sys
 import itertools
@@ -10,21 +11,31 @@ import gzip
 import go
 import utils
 import struct
+from collections import namedtuple
 
 from features import bulk_extract_features,make_onehot
 
 CHUNK_HEADER_FORMAT = "iii?"
 
 
-def make_onehot(coords):
+
+
+
+
+
+
+def make_onehot(coords):  #onehot则是顾名思义，一个长度为n的数组，只有一个元素是1，其他元素是0
+    print("生成坐标棋谱图")
     num_positions = len(coords)
-    output = np.zeros([num_positions, go.N ** 2], dtype=np.uint8)
+    output = np.zeros([num_positions, go.N ** 2], dtype=np.uint8) #返回给定形状和类型的新数组，用0填充。uint8是专门用于存储各种图像的 这个就是返回当前棋谱
     for i, coord in enumerate(coords):
-        output[i, utils.flatten_coords(coord)] = 1
+        output[i, utils.flatten_coords(coord)] = 1    #平担坐标
+
     return output
 
 def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数要先定义后才能调用 
     for dataset_dir in dataset_dirs:
+        print("获取棋谱文件")
         full_dir=os.path.join(os.getcwd(),dataset_dir)
         dataset_files=[os.path.join(full_dir,name) for name in os.listdir(full_dir)] #取得所有文件的全路径名，os.listdir()得到目录下所有文件名或目录名
                                                                                      #os.listdir
@@ -38,6 +49,7 @@ def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数
 
 
 def get_positions_from_sgf(file):     #取得行棋位置
+    print("得到行棋位置")
     with open(file) as f:                                   #打开一个文件到内存
          for position_w_context in replay_sgf(f.read()):   #得到行棋位置
              if position_w_context.is_usable():
@@ -46,6 +58,7 @@ def get_positions_from_sgf(file):     #取得行棋位置
 class DataSet(object):   #类名的单词首字母大写 ，类继承了object类的属性 为什么要继承object类呢？目的是便于统一操作。继承object类是为了让自己定义的类拥有更多的属性。比如__init__()
     def __init__(self,pos_features,next_moves,results,is_test=False):      #self代表当前对象的地址，self能避免非限定调用的全局变量。
         #初始化属性
+        print("开始初始化数据集对象")
         self.pos_features = pos_features
         self.next_moves = next_moves
         self.results = results
@@ -58,6 +71,7 @@ class DataSet(object):   #类名的单词首字母大写 ，类继承了object类的属性 为什么要
         self.shuffle()
 
     def shuffle(self):
+        print("开始打乱顺序，洗牌")
         perm = np.arange(self.data_size)
         np.random.shuffle(perm)
         self.pos_features = self.pos_features[perm]
@@ -65,6 +79,7 @@ class DataSet(object):   #类名的单词首字母大写 ，类继承了object类的属性 为什么要
         self._index_within_epoch = 0
 
     def write(self, filename):
+        print("写入中......")
         header_bytes = struct.pack(CHUNK_HEADER_FORMAT, self.data_size, self.board_size, self.input_planes, self.is_test)
         position_bytes = np.packbits(self.pos_features).tostring()
         next_move_bytes = np.packbits(self.next_moves).tostring()
@@ -76,10 +91,14 @@ class DataSet(object):   #类名的单词首字母大写 ，类继承了object类的属性 为什么要
        #如果
     @staticmethod    #这个注解表示  不用实例化类 可直接使用这个方法
     def from_positions_w_context(positions_w_context, is_test=False):
+
         positions, next_moves, results = zip(*positions_w_context)    #将元组列表解压成矩阵
         extracted_features = bulk_extract_features(positions)
         encoded_moves = make_onehot(next_moves)
+        print("生成数据集对象")
         return DataSet(extracted_features, encoded_moves, results, is_test=is_test)
+
+
 
 def split_test_training(positions_w_context,est_num_positions):
     desired_test_size=10**5

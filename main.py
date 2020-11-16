@@ -23,14 +23,16 @@ def preprocess(*datasets,processed_dir="processed_data"):    #´øÒ»¸öĞÇºÅ£¨*£©²ÎÊ
     test_chunk,training_chunks=parse_data_sets(*datasets)  
     print("·ÖÅä %s Î»ÖÃ×÷Îª²âÊÔ¿é; Ê£ÓàµÄ×÷ÑµÁ·¿é" % len(test_chunk), file=sys.stderr)
 
-    print("Ğ´Èë²âÊÔÊı¾İ¿é")
+
     test_dataset=DataSet.from_positions_w_context(test_chunk,is_test=True) #DataSetÀà
     test_filename=os.path.join(processed_dir,"test.chunk.gz")
+    print("Ğ´Èë²âÊÔÊı¾İ¿é")
     test_dataset.write(test_filename)
-    print("Ğ´ÈëÑµÁ·Êı¾İ¿é")
+
     training_datasets=map(DataSet.from_positions_w_context,training_chunks)
     for i,train_dataset in tqdm.tqdm(enumerate(training_datasets)):
         train_filename=os.path.join(processed_dir,"train%s.chunk.gz"% i)
+        print("Ğ´ÈëÑµÁ·Êı¾İ¿é")
         train_dataset.write(train_filename)
     print("ÒÑ¾­Ğ´ÈëÑµÁ·Êı¾İ%s"%(i+1))
 
