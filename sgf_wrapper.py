@@ -11,6 +11,8 @@ from go  import  Position
 from collections import namedtuple
 from utils import parse_sgf_coords as pc
 
+import numpy as np
+
 
 class GameMetadata(namedtuple("GameMetadata", "result handicap board_size")):   #构造类 namedtuple类位于collections模块,有了namedtuple后通过属性访问数据能够让我们的代码更加的直观更好维护
         pass
@@ -57,6 +59,15 @@ def handle_node(pos, node):
     else:
         return pos
 
+
+def add_stones(pos, black_stones_added, white_stones_added):
+    working_board = np.copy(pos.board)
+    go.place_stones(working_board, go.BLACK, black_stones_added)
+    go.place_stones(working_board, go.WHITE, white_stones_added)
+    new_position = Position(board=working_board, n=pos.n, komi=pos.komi, caps=pos.caps, ko=pos.ko, recent=pos.recent, to_play=pos.to_play)
+    return new_position
+
+
 def get_next_move(node):
     if not node.next:
         return None
@@ -91,7 +102,7 @@ def replay_sgf(sgf_contents):
     go.set_board_size(metadata.board_size)
     pos=Position(komi=komi)
     current_node=game.root
-    while pos is not None and current_node is not None :                               #开始遍历棋谱节点
+    while pos is not None and current_node is not None :                               #开始遍历棋谱节点   sgf字母结点  转为纯数字结点
           pos = handle_node(pos, current_node)
           maybe_correct_next(pos, current_node.next)
           next_move = get_next_move(current_node)

@@ -1,12 +1,15 @@
 #-*- coding:gbk -*-
 #from features import bulk_extract_features
+import time
+
 import numpy as np
 import os
 import sgf_wrapper
 from sgf_wrapper import replay_sgf   #wrapper 封装
 import sys
 import itertools
-import tqdm
+#import tqdm
+from tqdm import tqdm
 import gzip
 import go
 import utils
@@ -14,23 +17,46 @@ import struct
 from collections import namedtuple
 
 from features import bulk_extract_features,make_onehot
-
+CHUNK_SIZE = 4096
 CHUNK_HEADER_FORMAT = "iii?"
+CHUNK_HEADER_SIZE = struct.calcsize(CHUNK_HEADER_FORMAT)
+
+
+np.set_printoptions(threshold=sys.maxsize)    #打印时显示完整矩阵
 
 
 
 
 
+def take_n(n, iterable):
+    return list(itertools.islice(iterable, n))
 
 
 
-def make_onehot(coords):  #onehot则是顾名思义，一个长度为n的数组，只有一个元素是1，其他元素是0
+
+def iter_chunks(chunk_size, iterator):
+    while True:
+        next_chunk = take_n(chunk_size, iterator)
+        # If len(iterable) % chunk_size == 0, don't return an empty chunk.
+        if next_chunk:
+            yield next_chunk
+        else:
+            break
+
+def display(n,move):                #显示棋盘变化
+    for i in tqdm(range(100), desc='1st loop', ncols=75):
+          time.sleep(0.01)
+
+def make_onehot(coords):  #onehot则是顾名思义，一个长度为n的数组，蜂窝煤矩阵，只有一个元素是1，其他元素是0
     print("生成坐标棋谱图")
-    num_positions = len(coords)
-    output = np.zeros([num_positions, go.N ** 2], dtype=np.uint8) #返回给定形状和类型的新数组，用0填充。uint8是专门用于存储各种图像的 这个就是返回当前棋谱
-    for i, coord in enumerate(coords):
-        output[i, utils.flatten_coords(coord)] = 1    #平担坐标
+    num_positions = len(coords)                 #有多少步？
 
+    output = np.zeros([num_positions, go.N ** 2], dtype=np.uint8) #返回给定形状和类型的矩阵，用0填充。uint8是专门用于存储各种图像的 现在是生成多少步，第步有361个点
+    #print(output)
+    for i, coord in enumerate(coords):                #遍历矩阵
+        output[i, utils.flatten_coords(coord)] = 1    #放置坐标 将每一步落子转换成一位数组  flatten即降维 Flatten层用来将输入“压平”，即把多维的输入一维化，常用在从卷积层到全连接层的过渡
+                                                      #将第i手,坐标置1
+        #display(i,output[i].reshape(go.N,go.N))           #升维成棋盘显示
     return output
 
 def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数要先定义后才能调用 
@@ -49,9 +75,11 @@ def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数
 
 
 def get_positions_from_sgf(file):     #取得行棋位置
-    print("得到行棋位置")
+    print("正在处理棋谱文件：%s"%file)
     with open(file) as f:                                   #打开一个文件到内存
-         for position_w_context in replay_sgf(f.read()):   #得到行棋位置
+         for  i,position_w_context in enumerate(replay_sgf(f.read())):   #循环打开棋谱文件，得到棋谱数据 使用枚举得到序号
+             print("正在处理第%s手"%(i+1))
+             print(position_w_context.next_move)    #sgf坐标 横坐标（从左到右） 从a到s   纵坐标：从上到下a到s    现在使用数字坐标先是纵坐票0到18   后是横从坐票0到18
              if position_w_context.is_usable():
                  yield position_w_context
 
@@ -83,12 +111,12 @@ class DataSet(object):   #类名的单词首字母大写 ，类继承了object类的属性 为什么要
         header_bytes = struct.pack(CHUNK_HEADER_FORMAT, self.data_size, self.board_size, self.input_planes, self.is_test)
         position_bytes = np.packbits(self.pos_features).tostring()
         next_move_bytes = np.packbits(self.next_moves).tostring()
-        with gzip.open(filename, "wb", compresslevel=6) as f:
-             f.write(header_bytes)
-             f.write(position_bytes)
-             f.write(next_move_bytes)
+        with gzip.open(filename, "wb", compresslevel=6) as f:   #wb 是以二进制写入   使用with 可以避免因忘记写close而造成数据丢失的问题。
+             f.write(header_bytes)        #写入属性头
+             f.write(position_bytes)      #写入全部手数
+             f.write(next_move_bytes)     #写入每一步
 
-       #如果
+
     @staticmethod    #这个注解表示  不用实例化类 可直接使用这个方法
     def from_positions_w_context(positions_w_context, is_test=False):
 
@@ -96,6 +124,7 @@ class DataSet(object):   #类名的单词首字母大写 ，类继承了object类的属性 为什么要
         extracted_features = bulk_extract_features(positions)
         encoded_moves = make_onehot(next_moves)
         print("生成数据集对象")
+        #print(encoded_moves)
         return DataSet(extracted_features, encoded_moves, results, is_test=is_test)
 
 
@@ -104,7 +133,7 @@ def split_test_training(positions_w_context,est_num_positions):
     desired_test_size=10**5
     if est_num_positions<2*desired_test_size:                        #1000张棋谱才能充分训练
        print("！！！没有足够的数据生成测试数据集. Splitting 67:33")
-       positions_w_context = list(tqdm.tqdm(positions_w_context))
+       positions_w_context = list(tqdm(positions_w_context))
        test_size = len(positions_w_context) // 3
        return positions_w_context[:test_size], [positions_w_context[test_size:]]
     else:

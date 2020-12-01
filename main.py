@@ -20,11 +20,10 @@ def preprocess(*datasets,processed_dir="processed_data"):    #´øÒ»¸öĞÇºÅ£¨*£©²ÎÊ
     if not os.path.isdir(processed_dir):    
         os.mkdir(processed_dir)
     #TensorFlow½«´æ´¢¿éÒÔ¼°ÏàÓ¦µÄ¿éĞÅÏ¢³éÏóÎªÒ»ÖÖ½Ğ×öChunk(×é¿é)µÄË«ÏòÁ´±íÊı¾İ½á¹¹¡£
-    test_chunk,training_chunks=parse_data_sets(*datasets)  
+    test_chunk,training_chunks=parse_data_sets(*datasets)    #½âÎöÎÄ¼ş
     print("·ÖÅä %s Î»ÖÃ×÷Îª²âÊÔ¿é; Ê£ÓàµÄ×÷ÑµÁ·¿é" % len(test_chunk), file=sys.stderr)
 
-
-    test_dataset=DataSet.from_positions_w_context(test_chunk,is_test=True) #DataSetÀà
+    test_dataset=DataSet.from_positions_w_context(test_chunk,is_test=True) #DataSetÀà   ÎÄ¼ş×é½øÈë´¦Àí
     test_filename=os.path.join(processed_dir,"test.chunk.gz")
     print("Ğ´Èë²âÊÔÊı¾İ¿é")
     test_dataset.write(test_filename)
