@@ -12,6 +12,7 @@ import itertools
 from tqdm import tqdm
 import gzip
 import go
+import auto_play
 import utils
 import struct
 from collections import namedtuple
@@ -42,10 +43,11 @@ def iter_chunks(chunk_size, iterator):
             yield next_chunk
         else:
             break
-
+'''
 def display(n,move):                #显示棋盘变化
     for i in tqdm(range(100), desc='1st loop', ncols=75):
           time.sleep(0.01)
+          '''
 
 def make_onehot(coords):  #onehot则是顾名思义，一个长度为n的数组，蜂窝煤矩阵，只有一个元素是1，其他元素是0
     print("生成坐标棋谱图")
@@ -77,9 +79,13 @@ def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数
 def get_positions_from_sgf(file):     #取得行棋位置
     print("正在处理棋谱文件：%s"%file)
     with open(file) as f:                                   #打开一个文件到内存
-         for  i,position_w_context in enumerate(replay_sgf(f.read())):   #循环打开棋谱文件，得到棋谱数据 使用枚举得到序号
+         file=replay_sgf(f.read())
+         auto_play.game().run(file)
+         for  i,position_w_context in enumerate(file):   #循环打开棋谱文件，得到棋谱数据 使用枚举得到坐标
              print("正在处理第%s手"%(i+1))
              print(position_w_context.next_move)    #sgf坐标 横坐标（从左到右） 从a到s   纵坐标：从上到下a到s    现在使用数字坐标先是纵坐票0到18   后是横从坐票0到18
+
+
              if position_w_context.is_usable():
                  yield position_w_context
 
