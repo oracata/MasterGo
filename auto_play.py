@@ -91,9 +91,9 @@ class board:
         i=0
         for  stone_location in  stone:
            if  (i % 2) == 0 :
-             self.__points[stone_location[0]][stone_location[1]] =  '\033[1;34m' + ' @ ' + '\033[0m'
+             self.__points[stone_location[0]+1][stone_location[1]+1] =  '\033[1;34m' + ' @ ' + '\033[0m'
            else :
-             self.__points[stone_location[0]][stone_location[1]] ='\033[1;31m' + ' 0 ' + '\033[0m'
+             self.__points[stone_location[0]+1][stone_location[1]+1] ='\033[1;31m' + ' 0 ' + '\033[0m'
            i=i+1
 
     def show(self):
@@ -146,17 +146,17 @@ class game:
 
         self.board.show()
 
-        # the 'w a s d' are the directions
-        #operation_dict = {b'w': 'up', b'W': 'up', b's': 'down', b'S': 'down', b'a': 'left', b'A': 'left', b'd': 'right', b'D': 'right'}
-        op = msvcrt.getch()
+        ## the 'w a s d' are the directions
+        ##operation_dict = {b'w': 'up', b'W': 'up', b's': 'down', b'S': 'down', b'a': 'left', b'A': 'left', b'd': 'right', b'D': 'right'}
+        #op = msvcrt.getch()     #µ»¥˝º¸≈Ã ‰»Î
 
-        #while op != b'q':
-        for i, self.position_w_context in enumerate(file):
+        ##while op != b'q':
+        for i, position_w_context in enumerate(file):
 
-                if self.position_w_context.next_move is not None:
-                  self.stone.append(self.position_w_context.next_move)
+                if  position_w_context.next_move is not None:
+                  self.stone.append( position_w_context.next_move)
                   self.show(self.stone)
-                  time.sleep(2)
+                  #time.sleep(2)
                   #op = msvcrt.getch()
 
 

@@ -1,5 +1,6 @@
 #-*- coding:gbk -*-
 #from features import bulk_extract_features
+import copy
 import time
 
 import numpy as np
@@ -78,12 +79,18 @@ def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数
 
 def get_positions_from_sgf(file):     #取得行棋位置
     print("正在处理棋谱文件：%s"%file)
-    with open(file) as f:                                   #打开一个文件到内存
-         file=replay_sgf(f.read())
-         auto_play.game().run(file)
-         for  i,position_w_context in enumerate(file):   #循环打开棋谱文件，得到棋谱数据 使用枚举得到坐标
-             print("正在处理第%s手"%(i+1))
-             print(position_w_context.next_move)    #sgf坐标 横坐标（从左到右） 从a到s   纵坐标：从上到下a到s    现在使用数字坐标先是纵坐票0到18   后是横从坐票0到18
+    with open(file) as t:                                   #打开一个文件到内存
+         ft=replay_sgf(t.read())
+
+         auto_play.game().run(ft)                      #自动显示棋谱
+
+
+
+    with open(file) as f:                                   #打开一个文件到内存(上面已经打开过 要重新打开)
+
+         for  i,position_w_context in enumerate(replay_sgf(f.read())):   #循环打开棋谱文件，得到棋谱数据 使用枚举得到坐标
+             #print("正在处理第%s手"%(i+1))
+             #print(position_w_context.next_move)    #sgf坐标 横坐标（从左到右） 从a到s   纵坐标：从上到下a到s    现在使用数字坐标先是纵坐票0到18   后是横从坐票0到18
 
 
              if position_w_context.is_usable():
