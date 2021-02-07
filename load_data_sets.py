@@ -79,11 +79,11 @@ def find_sgf_files(*dataset_dirs): #python因为是脚本语言而不是编译语言，所以函数
 
 def get_positions_from_sgf(file):     #取得行棋位置
     print("正在处理棋谱文件：%s"%file)
+    #auto_play.game().__init__()
     with open(file) as t:                                   #打开一个文件到内存
          ft=replay_sgf(t.read())
 
-         auto_play.game().run(ft)                      #自动显示棋谱
-
+         auto_play.game().run(ft,file)                      #自动显示棋谱
 
 
     with open(file) as f:                                   #打开一个文件到内存(上面已经打开过 要重新打开)
